@@ -1,105 +1,118 @@
-# Functions
-Functions in Kotlin are defined using the fun keyword. The return type is denoted after the parenthesis with a colon. Also, we can't use var or val keywords in the function signature.
-```
-fun double(num: Int):Int{
-  return 2*num
-}
-```
-We can also use default parameters in the function.
-```
-fun double(num:Int=0):Int{
-  return 2*num
-}
-```
+# Kotlin Collections
 
-### Single Expression Functions:
-These are functions whose body contain only a single expression.
-```
-fun sum(a:Int, b:Int):Int = a+b
-```
-### varargs keyword:
-By using varargs keyword we can send any number of arguments to the function.
-```
-fun printVars(varargs numbers:Int){
-  for(number in numbers){
-    println(number)
-  }
-}
-```
+It is used to manage similar items in a collection. We'll mainly focus on 2 different type of collections:
+- Immutable Collection
+- Mutable Collection
 
-## Extension Functions:
+Different types of collection would include: lists, sets and maps.
 
-These functions are used to add more functionality to existing classes without inheriting them.
+## Lists:
 
+- It is an ordered collection of elements
+- It allows duplicates
+- To make lists mutable use mutableListOf
+
+Example:
 ```
-class Rectangle(val length: Double, val breadth: Double){
-  fun area():Double{
-    return length*breadth
-  }
-}
-fun main(){
-  fun Rectangle.perimeter():Double{
-    return 2*(length+breadth)
-  }
-  val rect = Rectangle(4,5)
-  println("Perimeter of circle is ${rect.perimeter()})
-}
+val readOnlyList = listOf(1, 2, 3)
+val mutableList = mutableListOf(1, 2, 3)
+```
+## Sets:
+
+- It is an unordered collection of elements
+- It doesn't allow duplicates
+- To make sets mutable use mutableSetOf
+
+Example:
+```
+val readOnlySet = setOf(1, 2, 3)
+val mutableSet = mutableSetOf(1, 2, 3)
+```
+## Maps:
+
+- It is a collection of key-value pairs
+- Keys are unique but values can be duplicates
+- To make maps mutable use mutableMapOf
+
+Example:
+```
+val readOnlyMap = mapOf("one" to 1, "two" to 2)
+val mutableMap= mutableMapOf("one" to 1, "two" to 2)
 ```
 
-## Higher Order Functions:
+## Transformations:
 
-A function that can accept another function as argument is called a Higher Order Function. It usually takes a lambda function as argument.
+Transformations in Kotlin help us manipulate and process data.
 
-```
-var lambda = {a: Int , b: Int -> a + b }
+### 1. map
 
-fun higherfunc( lower: (Int, Int) -> Int) {          
-    var result = lower(2,4)                  
-    println("The sum of two numbers is: $result")
-}
-
-fun main() {
-   higherfunc(lambda)
-}
+It transforms each element in the existing collection and returns a new collection.
 
 ```
-
-# Classes
-
-A class is a blueprint for creating objects, providing initial values for state, and implementations of behavior using member variables and functions respectively.
-
-An object is an instance of a class and has its own state and behavior.
-
-```
-class Person{
-  val name
-  fun showName(){
-    println(name)
-  }
-}
-fun main(){
-  var p = Person()
-  p.name="XYZ"
-  p.showName()
+fun mapExample() {
+    val numbers = listOf(1, 2, 3, 4)
+    val squaredNumbers = numbers.map { it * it }
+    println(squaredNumbers) 
 }
 ```
 
-## Generic Classes:
+### 2. filter
 
-In Kotlin, generic classes allow us to create classes, interfaces, and functions that can operate with different types of data while maintaining type safety. This means we can write a class or function that can handle multiple data types and makes sure of type checking.
-
-For example we want to create a type called Box that contains an integer:
+It filters the collection based on a condition, returning only the elements that match the condition.
 
 ```
-class Box<T>(var content: T) // Generic class with a placeholder type
-
-fun main() {
-    val intBox: Box<Int> = Box(1)
-    println("Content of intBox: ${intBox.content}")
-    intBox.content = 42
-    println("Updated content of intBox: ${intBox.content}")
+fun filterExample() {
+    val numbers = listOf(1, 2, 3, 4, 5, 6)
+    val evenNumbers = numbers.filter { it % 2 == 0 }
+    println(evenNumbers)
 }
-
 ```
 
 
+# Null Safety
+
+It is a concept in Kotlin that helps us handle null values and prevent errors that might happen due to null values.
+
+To denote a variable as nullabe we use ? operator
+
+```
+val a:Int? = null
+```
+
+To call a function that might return null value, we use safe calls, i.e, we use '?.' operator to make the call.
+
+```
+val a:String? = null
+println(a?.length)
+```
+
+When we are 100% sure a function will definitely return non null value, we use non-null assertion operator to make a function call. We use '!!.' operatore for this.
+
+```
+val a:String?="hello"
+println(a!!.length)
+```
+
+### Elvis Operator (?:)
+
+ It is a concise way to handle nullable variables and provide default values in case of null.
+
+ ```
+ val name: String? = "Kotlin"
+val displayName = name ?: "Unknown"
+println(displayName)
+ ```
+
+
+## Let Keyword:
+
+<b>let</b> is a scope function that allows us to execute a block of code within the context of an object. That is, the block executes only when a certain condition is met. It is used for null checks, transforming and processing data.
+
+```
+val name: String? = "Kotlin"
+name?.let {
+    println("Name length: ${it.length}")
+}
+```
+
+Here, the code only runs when name is not null.
