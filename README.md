@@ -10,3 +10,4 @@ The lifecycle methods are:  onCreate, onStart, onResume, onPause, onStop, onDest
 - onDestroy is called to kill the activity
 
 # Screenshot of Assignment:
+<img src='https://github.com/Jangyaseni666/Kotlin_21bctg36/assets/96827920/77ed80b1-ea57-45cc-aeea-2a3003225502' height=800 width=400>
