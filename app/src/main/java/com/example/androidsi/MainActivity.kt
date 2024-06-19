@@ -2,6 +2,7 @@ package com.example.androidsi
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.text.style.AlignmentSpan
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -10,9 +11,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +23,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Edit
@@ -41,11 +47,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
@@ -70,6 +78,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.navigation.NavController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.androidsi.ui.theme.AndroidSITheme
 import kotlin.math.round
 
@@ -80,7 +94,9 @@ class MainActivity : ComponentActivity() {
 //        enableEdgeToEdge()
         val gColors = listOf(Color.Cyan, Color.Green, Color.Red)
         setContent {
-            ScaffoldSample()
+            //ScaffoldSample()
+            //TextFieldSample()
+            AppNavigation()
         }
 
     }
@@ -185,7 +201,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.padding(10.dp),
                     value = sliderPos,
                     onValueChange = { sliderPos = it },
-                    steps=10,
+                    steps = 10,
                     valueRange = 0f..10f
                 )
                 Text(text = "The slider value is: ${round(sliderPos)}")
@@ -193,17 +209,174 @@ class MainActivity : ComponentActivity() {
                 var checked by remember {
                     mutableStateOf(true)
                 }
-                Switch(checked = checked, onCheckedChange = {checked=it})
+                Switch(checked = checked, onCheckedChange = { checked = it })
                 //Red divider
                 Divider(thickness = 3.dp, color = Color.Red)
                 //Implemented the progress indicator
-                if(checked)
-                CircularProgressIndicator(modifier = Modifier.padding(5.dp))
+                if (checked)
+                    CircularProgressIndicator(modifier = Modifier.padding(5.dp))
                 else {
                     Text(text = "The progress is stopped")
                 }
             }
         }
+    }
+
+    @Composable
+    fun AppNavigation() {
+        val navController = rememberNavController()
+        NavHost(navController = navController, startDestination = "screen1") {
+            composable("screen1") { Screen1(navController) }
+            composable("screen2") { Screen2(navController) }
+            composable("screen3/{name}", arguments = listOf(navArgument("name") {
+                type = NavType.StringType
+            })) { backStackEntry ->
+                Screen3(navController, backStackEntry.arguments?.getString("name") ?: "")
+            }
+            composable(route = "screen4/{data}", arguments = listOf(navArgument("data") {
+                type = NavType.StringType
+            })) { backStackEntry ->
+                Screen4(
+                    navController = navController,
+                    backStackEntry.arguments?.getString("data") ?: ""
+                )
+            }
+            composable(route = "listsandgrids") { ListsAndGrids(navController) }
+        }
+    }
+
+    @Composable
+    fun Screen1(navController: NavController) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp)
+        ) {
+            Text(text = "Welcome to the Student Registration.", fontSize = 40.sp)
+            Button(onClick = { navController.navigate("screen2") }) {
+                Text(text = "Proceed")
+            }
+        }
+    }
+
+    @Composable
+    fun Screen2(navController: NavController) {
+        var name by remember {
+            mutableStateOf("")
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp)
+        ) {
+            Text(text = "Fill the following details:", color = Color.Red, fontSize = 40.sp)
+            TextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text(text = "Enter your name") })
+            Button(onClick = { navController.navigate("screen3/$name") }) {
+                Text(text = "Next")
+            }
+        }
+    }
+
+    @Composable
+    fun Screen3(navController: NavController, name: String) {
+        var sic by remember {
+            mutableStateOf("")
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp)
+        ) {
+            Text(text = "Welcome $name.", color = Color.Cyan, fontSize = 40.sp)
+            OutlinedTextField(value = sic, onValueChange = {
+                sic = it
+            }, label = { Text(text = "Enter your SIC") })
+            Button(onClick = { navController.navigate("screen4/$sic") }) {
+                Text(text = "Goto Screen 4")
+            }
+        }
+    }
+
+    @Composable
+    fun Screen4(navController: NavController, data: String) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (data.startsWith("21")) {
+                Text(
+                    text = "Your registration is complete! Welcome to 4th year!!",
+                    color = Color.Green,
+                    fontSize = 40.sp
+                )
+            } else if (data.startsWith("22")) {
+                Text(
+                    text = "Your registration is complete! Welcome to 3rd year!!",
+                    color = Color.Green,
+                    fontSize = 40.sp
+                )
+            } else if (data.startsWith("23")) {
+                Text(
+                    text = "Your registration is complete! Welcome to 2nd year!!",
+                    color = Color.Green,
+                    fontSize = 40.sp
+                )
+            } else if (data.startsWith("24")) {
+                Text(
+                    text = "Your registration is complete! Welcome to 1st year!!",
+                    color = Color.Green,
+                    fontSize = 40.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(50.dp))
+            Text(
+                text = "Click the below button to see lists and grid implementation",
+                textAlign = TextAlign.Center
+            )
+            Button(onClick = { navController.navigate("listsandgrids") }) {
+                Text(text = "click me")
+            }
+        }
+    }
+
+    @Composable
+    fun ListsAndGrids(navController: NavController) {
+        var checked by remember {
+            mutableStateOf(true)
+        }
+
+        Column(modifier = Modifier.padding(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically){
+                Text(text = "Grid", modifier = Modifier.padding(5.dp))
+                Switch(checked = checked, onCheckedChange = { checked = it })
+                Text(text = "Lists", modifier = Modifier.padding(5.dp))
+            }
+            if (checked) {
+                LazyColumn {
+                    items(10) {
+                        Card(modifier = Modifier.size(width = 100.dp, height = 100.dp)) {
+                            Text(text = "Card1")
+                            Text(text = "Filler Text")
+                        }
+                    }
+                }
+            } else {
+                LazyVerticalGrid(columns = GridCells.Adaptive(128.dp)) {
+                    items(15) {
+                        Card(modifier = Modifier.size(width = 100.dp, height = 100.dp)) {
+                            Text(text = "Card1")
+                            Text(text = "Filler Text")
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }
 
