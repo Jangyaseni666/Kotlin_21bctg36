@@ -1,3 +1,14 @@
+# Lazy Loading:
+Lazy loading is a design pattern commonly used in software development to defer the initialization of an object until it is needed. This can improve the performance of applications, especially in scenarios where loading all resources upfront would be resource-intensive and unnecessary. Lazy loading is particularly useful in web development, mobile applications, and data processing.
+Example: Loading images, videos, and other multimedia content only when they are about to be viewed by the user.
+
+## Benefits:
+- Performance Improvement
+- Reduced Memory Usage
+- Improved User Experience
+
+In Jetpack compose we use ```LazyRow```, ```LazyColumn```, ```LazyVerticalGrid``` and ```LazyHorizontalGrid``` to implement lazy loading.
+ 
 # App LifeCycle:
 
 The life cycle entails opening the app, performing a task and killing the app. It is also called as activity lifecycle.
