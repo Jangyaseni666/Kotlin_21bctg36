@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -26,9 +27,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.BottomAppBar
@@ -54,10 +59,12 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -68,9 +75,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -78,6 +89,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -94,290 +107,178 @@ class MainActivity : ComponentActivity() {
 //        enableEdgeToEdge()
         val gColors = listOf(Color.Cyan, Color.Green, Color.Red)
         setContent {
-            //ScaffoldSample()
-            //TextFieldSample()
-            AppNavigation()
+            ComposeLogin()
+            //CounterView()
+            //GenericImplementation()
         }
 
     }
 
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun ScaffoldSample() {
-        // Implementing Scaffold
-        Scaffold(
-            topBar = {
-                TopAppBar(colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ), title = { Text(text = "Top bar is here", fontSize = 30.sp) })
-            },
-            bottomBar = {
-                BottomAppBar(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.primary
+    fun ComposeLogin() {
+        var email by remember {
+            mutableStateOf("")
+        }
+        var password by remember {
+            mutableStateOf("")
+        }
+        var passwordVisible by remember {
+            mutableStateOf(false)
+        }
+        Column(modifier = Modifier.padding(30.dp)) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .border(1.dp, color = Color(0xFFeff4fa), shape = RoundedCornerShape(5))
+                    .fillMaxWidth()
+                    .background(color = Color(0xFFeff4fa), shape = RoundedCornerShape(5))
+            ) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Column(
+                    modifier = Modifier
+                        .padding(5.dp)
                 ) {
-                    Text(text = "Bottom bar is hereee")
-                }
-            },
-            floatingActionButton = {
-                FloatingActionButton(onClick = { println("Edit is clicked") }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit button")
-                }
-            }
-        ) {
-            Column(modifier = Modifier.padding(it)) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF50f2e2)
-                    ), modifier = Modifier
-                        .size(width = 300.dp, height = 300.dp)
-                        .padding(10.dp)
-                ) {
-                    Text(
-                        text = "Name Card",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        modifier = Modifier.padding(10.dp),
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "Name : Jangyaseni Sahoo",
-                        fontSize = 20.sp,
-                        modifier = Modifier.padding(10.dp),
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "Desgination: Student",
-                        fontSize = 20.sp,
-                        modifier = Modifier.padding(10.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-                // Implement assist chip and also the close button
-                var showChip by remember {
-                    mutableStateOf(true)
-                }
-                if (showChip) {
-                    AssistChip(
-                        onClick = { showChip = false },
-                        label = { Text(text = "assist chip") },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Default.Clear,
-                                contentDescription = "clear"
-                            )
-                        })
-                }
-                //Implement bottom sheetn using a button also add the chip back if it is removed
-                var showBottom by remember {
-                    mutableStateOf(false)
-                }
-                Button(
-                    onClick = {
-                        showBottom = true
-                        showChip = true
-                    }
-                ) {
-                    Text(text = "Click me")
-                }
-                if (showBottom) {
-                    ModalBottomSheet(
-                        onDismissRequest = { showBottom = false },
-                        modifier = Modifier.fillMaxSize()
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "this is the bottom sheet",
-                            fontSize = 20.sp,
-                            modifier = Modifier.padding(5.dp)
+                            text = "Jetpack Compose",
+                            color = Color(0xFF01618c),
+                            fontSize = 32.sp
                         )
+                        Image(
+                            painter = painterResource(id = R.drawable.jetpack),
+                            contentDescription = "Logo of Jetpack",
+                            modifier = Modifier.size(width = 130.dp, height = 130.dp)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
                     }
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Text(text = "Login", fontSize = 35.sp, color = Color(0xFF0e6738))
+                        Spacer(modifier = Modifier.height(20.dp))
+                        OutlinedTextField(value = email, onValueChange = { email = it }, label = {
+                            Text(
+                                text = "Email ID or Mobile Number"
+                            )
+                        }, modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(20.dp))
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = { password = it },
+                            label = {
+                                Text(
+                                    text = "Password"
+                                )
+                            }, modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                    contentDescription = "Logo",
+                                    modifier = Modifier.clickable {
+                                        passwordVisible = !passwordVisible
+                                    }
+                                )
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation()
+                        )
+                        Row(modifier = Modifier.fillMaxWidth().padding(5.dp), horizontalArrangement = Arrangement.End) {
+                            Text(text = "Forgot Password?", color=Color(0xFF166247))
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Button(onClick = { /*TODO*/ },colors =ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF00639a)
+                        )) {
+                            Text(text = "Login", fontSize = 15.sp, modifier = Modifier.padding(2.dp))
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+
                 }
-                // Implement slider within the range 0 and 10
-                var sliderPos by remember {
-                    mutableStateOf(0f)
-                }
-                Slider(
-                    modifier = Modifier.padding(10.dp),
-                    value = sliderPos,
-                    onValueChange = { sliderPos = it },
-                    steps = 10,
-                    valueRange = 0f..10f
-                )
-                Text(text = "The slider value is: ${round(sliderPos)}")
-                // Implement Switch
-                var checked by remember {
-                    mutableStateOf(true)
-                }
-                Switch(checked = checked, onCheckedChange = { checked = it })
-                //Red divider
-                Divider(thickness = 3.dp, color = Color.Red)
-                //Implemented the progress indicator
-                if (checked)
-                    CircularProgressIndicator(modifier = Modifier.padding(5.dp))
-                else {
-                    Text(text = "The progress is stopped")
+            }
+            Row(modifier = Modifier
+                .padding(10.dp)
+                .fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                Row(modifier = Modifier.padding(20.dp)) {
+                    Text(text = "Don't have an account?", fontSize = 15.sp)
+                    Text(text = " Register", color=Color(0xFF01618c), fontSize = 15.sp)
                 }
             }
         }
     }
 
+    //View implementation
     @Composable
-    fun AppNavigation() {
-        val navController = rememberNavController()
-        NavHost(navController = navController, startDestination = "screen1") {
-            composable("screen1") { Screen1(navController) }
-            composable("screen2") { Screen2(navController) }
-            composable("screen3/{name}", arguments = listOf(navArgument("name") {
-                type = NavType.StringType
-            })) { backStackEntry ->
-                Screen3(navController, backStackEntry.arguments?.getString("name") ?: "")
-            }
-            composable(route = "screen4/{data}", arguments = listOf(navArgument("data") {
-                type = NavType.StringType
-            })) { backStackEntry ->
-                Screen4(
-                    navController = navController,
-                    backStackEntry.arguments?.getString("data") ?: ""
-                )
-            }
-            composable(route = "listsandgrids") { ListsAndGrids(navController) }
-        }
-    }
-
-    @Composable
-    fun Screen1(navController: NavController) {
+    fun CounterView(counterVM: CounterViewModel = viewModel()){
+        val counterState = counterVM.counter.value
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp)
-        ) {
-            Text(text = "Welcome to the Student Registration.", fontSize = 40.sp)
-            Button(onClick = { navController.navigate("screen2") }) {
-                Text(text = "Proceed")
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment=Alignment.CenterHorizontally,
+            verticalArrangement=Arrangement.Center
+        ){
+            Text(text="Current counter value: ${counterState.count}")
+            Row{
+                Button(onClick={counterVM.incrementCounter()}){
+                    Text(text="increment value")
+                }
+                Spacer(modifier = Modifier.width(20.dp))
+                Button(onClick={counterVM.decrementCounter()}){
+                    Text(text="decrement value")
+                }
+            }
+            Button(onClick = { counterVM.resetCounter() }) {
+                Text(text="Reset")
             }
         }
     }
 
     @Composable
-    fun Screen2(navController: NavController) {
-        var name by remember {
-            mutableStateOf("")
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp)
-        ) {
-            Text(text = "Fill the following details:", color = Color.Red, fontSize = 40.sp)
-            TextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text(text = "Enter your name") })
-            Button(onClick = { navController.navigate("screen3/$name") }) {
-                Text(text = "Next")
-            }
-        }
-    }
-
-    @Composable
-    fun Screen3(navController: NavController, name: String) {
-        var sic by remember {
-            mutableStateOf("")
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp)
-        ) {
-            Text(text = "Welcome $name.", color = Color.Cyan, fontSize = 40.sp)
-            OutlinedTextField(value = sic, onValueChange = {
-                sic = it
-            }, label = { Text(text = "Enter your SIC") })
-            Button(onClick = { navController.navigate("screen4/$sic") }) {
-                Text(text = "Goto Screen 4")
-            }
-        }
-    }
-
-    @Composable
-    fun Screen4(navController: NavController, data: String) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (data.startsWith("21")) {
-                Text(
-                    text = "Your registration is complete! Welcome to 4th year!!",
-                    color = Color.Green,
-                    fontSize = 40.sp
-                )
-            } else if (data.startsWith("22")) {
-                Text(
-                    text = "Your registration is complete! Welcome to 3rd year!!",
-                    color = Color.Green,
-                    fontSize = 40.sp
-                )
-            } else if (data.startsWith("23")) {
-                Text(
-                    text = "Your registration is complete! Welcome to 2nd year!!",
-                    color = Color.Green,
-                    fontSize = 40.sp
-                )
-            } else if (data.startsWith("24")) {
-                Text(
-                    text = "Your registration is complete! Welcome to 1st year!!",
-                    color = Color.Green,
-                    fontSize = 40.sp
-                )
-            }
-            Spacer(modifier = Modifier.height(50.dp))
-            Text(
-                text = "Click the below button to see lists and grid implementation",
-                textAlign = TextAlign.Center
-            )
-            Button(onClick = { navController.navigate("listsandgrids") }) {
-                Text(text = "click me")
-            }
-        }
-    }
-
-    @Composable
-    fun ListsAndGrids(navController: NavController) {
-        var checked by remember {
-            mutableStateOf(true)
-        }
-
+    fun GenericImplementation(){
+        val intContent = GenericClass(123)
+        val stringContent = GenericClass("hello")
+        val doubleContent = GenericClass(20.05)
         Column(modifier = Modifier.padding(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically){
-                Text(text = "Grid", modifier = Modifier.padding(5.dp))
-                Switch(checked = checked, onCheckedChange = { checked = it })
-                Text(text = "Lists", modifier = Modifier.padding(5.dp))
-            }
-            if (checked) {
-                LazyColumn {
-                    items(10) {
-                        Card(modifier = Modifier.size(width = 100.dp, height = 100.dp)) {
-                            Text(text = "Card1")
-                            Text(text = "Filler Text")
-                        }
-                    }
-                }
-            } else {
-                LazyVerticalGrid(columns = GridCells.Adaptive(128.dp)) {
-                    items(15) {
-                        Card(modifier = Modifier.size(width = 100.dp, height = 100.dp)) {
-                            Text(text = "Card1")
-                            Text(text = "Filler Text")
-                        }
-                    }
-                }
-            }
+            Text(text = "${intContent.content::class.simpleName} content: ${intContent.content}", fontSize = 35.sp)
+            Text(text = "${stringContent.content::class.simpleName} content: ${stringContent.content}", fontSize = 35.sp)
+            Text(text = "${doubleContent.content::class.simpleName} content: ${doubleContent.content}", fontSize = 35.sp)
         }
+    }
 
+}
+
+//Implementing MVVM architecture
+
+//Model class
+data class Counter(val count:Int)
+
+//ViewModel Class
+class CounterViewModel : ViewModel(){
+    private val _counter = mutableStateOf(Counter(0))
+    val counter: State<Counter> = _counter  //recompose UI everytime counter changes
+
+    fun incrementCounter(){
+        _counter.value=Counter(_counter.value.count+1)
+    }
+    fun decrementCounter(){
+        _counter.value=Counter(_counter.value.count-1)
+    }
+    fun resetCounter(){
+        _counter.value = Counter(0);
     }
 }
+
+//Implementing Generics
+class GenericClass<T>(var content:T){
+
+    fun displaySomething(){
+        println(content)
+    }
+}
+
+
+
 
 
