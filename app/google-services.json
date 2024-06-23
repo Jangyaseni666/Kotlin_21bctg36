@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "222730236325",
+    "project_id": "composefirebase-fde10",
+    "storage_bucket": "composefirebase-fde10.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222730236325:android:84828f6a8f0f413ebfb84c",
+        "android_client_info": {
+          "package_name": "com.jangyaseni.firebaseapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyUIPcxy4mJ5baBC0wepLqxhpksF6SAkc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
