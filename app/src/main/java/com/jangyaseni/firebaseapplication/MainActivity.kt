@@ -1,11 +1,19 @@
 package com.jangyaseni.firebaseapplication
 
 import android.content.ContentValues.TAG
+import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -40,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -50,6 +60,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseTooManyRequestsException
@@ -61,8 +73,10 @@ import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObject
+import com.google.firebase.storage.storage
 import com.jangyaseni.firebaseapplication.ui.theme.FireBaseApplicationTheme
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
@@ -71,7 +85,10 @@ class MainActivity : ComponentActivity() {
         //enableEdgeToEdge()
         setContent {
             FireBaseApplicationTheme {
-                AppNavigation()
+//                AppNavigation()
+                UploadImageScreen()
+//                val localContext = LocalContext.current
+
             }
         }
     }
@@ -559,6 +576,79 @@ class MainActivity : ComponentActivity() {
             .addOnFailureListener {
                 Log.w(TAG, "Error in fetching data: ${it.message}")
             }
+    }
+
+    val storage = Firebase.storage
+    val storageRef = storage.reference
+
+    fun uploadImages(uri: Uri, context : Context){
+        val fileName = "images/${UUID.randomUUID()}.jpg"
+        val imageRef = storageRef.child(fileName)
+        imageRef.putFile(uri)
+            .addOnSuccessListener {
+                imageRef.downloadUrl.addOnSuccessListener {
+                    Toast.makeText(context, "Image uploaded successfully: $it", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener{
+                Toast.makeText(context, "Image failed to upload", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    @Composable
+    fun UploadImageScreen(){
+        val context = LocalContext.current
+        var imageUri by remember {
+            mutableStateOf<Uri?>(null)
+        }
+        val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) {uri:Uri? ->
+            imageUri=uri
+            uri?.let {
+                uploadImages(it, context)
+            }
+        }
+
+        val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+            if(it){
+                Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show()
+            }else{
+                Toast.makeText(context, "Please grant the permission", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(onClick = {
+                launcher.launch("image/*")
+            }) {
+                Text(text = "Select Image")
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            imageUri?.let {
+                Image(painter = rememberAsyncImagePainter(it), contentDescription = "image", Modifier.size(250.dp, 250.dp))
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            Button(onClick = {
+                permissionLauncher.launch(android.Manifest.permission.CAMERA)
+            }) {
+                Text(text = "Grant camera access")
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            Button(onClick = {
+                permissionLauncher.launch(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            }) {
+                Text(text = "Grant location access")
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            Button(onClick = {
+                permissionLauncher.launch(android.Manifest.permission.ACCESS_MEDIA_LOCATION)
+            }) {
+                Text(text = "Grant media access")
+            }
+        }
     }
 
 }
