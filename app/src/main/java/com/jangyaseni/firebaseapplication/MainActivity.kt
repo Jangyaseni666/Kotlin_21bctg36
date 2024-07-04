@@ -3,6 +3,7 @@ package com.jangyaseni.firebaseapplication
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
+import android.content.IntentSender
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -14,6 +15,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -36,6 +38,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.materialIcon
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -57,6 +60,7 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -64,12 +68,16 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
+import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseTooManyRequestsException
@@ -84,93 +92,133 @@ import com.google.firebase.firestore.toObject
 import com.google.firebase.storage.storage
 import com.jangyaseni.firebaseapplication.ui.theme.FireBaseApplicationTheme
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
+
+    private val googleAuthClient by lazy {
+        GoogleAuthClient(
+            context = applicationContext,
+            oneTapClient = Identity.getSignInClient(applicationContext)
+        )
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //enableEdgeToEdge()
         setContent {
             FireBaseApplicationTheme {
-//                Column(
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .padding(10.dp),
-//                    verticalArrangement = Arrangement.Center,
-//                    horizontalAlignment = Alignment.CenterHorizontally
-//                ) {
-//                    LinkText(text = "Click to go to Youtube", url = "https://youtube.com/")
-//                }
-                //WebVewScreen(url = "https://erp.silicon.ac.in/estcampus/")
-                SharedPrefScreen(context = this)
-            }
-        }
-    }
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = "signIn"){
+                    composable("signIn"){
+                        val viewModel = viewModel<SignInViewModel>()
+                        val state by viewModel.state.collectAsStateWithLifecycle()
 
-    @Composable
-    fun LinkText(text: String, url: String) {
-        val context = LocalContext.current
-        var annotatedString = buildAnnotatedString {
-            append(text)
-            addStyle(
-                style = SpanStyle(
-                    color = Color.Blue,
-                    textDecoration = TextDecoration.Underline
-                ),
-                start = 0,
-                end = text.length
-            )
-            addStringAnnotation(
-                tag = "URL",
-                annotation = url,
-                start = 0,
-                end = url.length
-            )
-        }
-        ClickableText(text = annotatedString,
-            onClick = { offset ->
-                annotatedString.getStringAnnotations("URL", offset, offset)
-                    .firstOrNull()?.let {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.item))
-                        context.startActivity(intent)
+                        LaunchedEffect(key1 = Unit) {
+                            if(googleAuthClient.getSignedInUser()!=null){
+                                navController.navigate("profile")
+                            }
+                        }
+
+                        val launcher = rememberLauncherForActivityResult(
+                            contract = ActivityResultContracts.StartIntentSenderForResult(),
+                            onResult = {result ->
+                                if(result.resultCode == RESULT_OK){
+                                    lifecycleScope.launch {
+                                        val signInResult = googleAuthClient.signInWithIntent(
+                                            intent = result.data?: return@launch
+                                        )
+                                        viewModel.onSignInResult(signInResult)
+                                    }
+                                }
+                            }
+                        )
+
+                        LaunchedEffect(key1 = state.isSignInSuccessful) {
+                            if(state.isSignInSuccessful){
+                                Toast.makeText(
+                                    applicationContext,
+                                    "Sign In Successful",
+                                    Toast.LENGTH_LONG
+                                ).show()
+
+                                navController.navigate("profile")
+                                viewModel.resetState()
+                            }
+                        }
+
+                        SignInScreen(
+                            state = state,
+                            onSignInClick = {
+                                lifecycleScope.launch {
+                                    val signInIntentSender = googleAuthClient.signIn()
+                                    launcher.launch(
+                                        IntentSenderRequest.Builder(
+                                            signInIntentSender ?: return@launch
+                                        ).build()
+                                    )
+                                }
+                            }
+                        )
                     }
-            }
-        )
-    }
+                    composable("profile"){
+                        ProfileScreen(
+                            userData = googleAuthClient.getSignedInUser(),
+                            onSignOut = {
+                                lifecycleScope.launch {
+                                    googleAuthClient.signOut()
+                                    Toast.makeText(
+                                        applicationContext,
+                                        "Sign out successful",
+                                        Toast.LENGTH_LONG
+                                    ).show()
 
-    @Composable
-    fun WebVewScreen(url: String) {
-        val context = LocalContext.current
-        AndroidView(
-            factory = {
-                WebView(context).apply {
-                    webViewClient = WebViewClient()
-                    loadUrl(url)
-                    settings.javaScriptEnabled
+                                    navController.popBackStack()
+                                }
+                            }
+                        )
+                    }
                 }
-            },
-            update = {
-                it.loadUrl(url)
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+            }
+        }
     }
 
     @Composable
-    fun SharedPrefScreen(context: Context){
-        val sharedPref = context.getSharedPreferences("myPrefs", Context.MODE_PRIVATE)
-        val editor = sharedPref.edit()
+    fun SignInScreen(
+        state: SignInState,
+        onSignInClick: () -> Unit
+    ){
+        val context = LocalContext.current
+        LaunchedEffect(key1 = state.signInError) {
+            state.signInError?.let {error ->
+                Toast.makeText(
+                    context,
+                    error,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
 
-        var uname by remember{
-            mutableStateOf(sharedPref.getString("username", "")?:"")
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(onClick = onSignInClick) {
+                Text(text = "Sign In")
+            }
+
         }
-        var password by remember{
-            mutableStateOf(sharedPref.getString("password", "")?:"")
-        }
-        var credsVisible by remember {
-            mutableStateOf(false)
-        }
+    }
+
+    @Composable
+    fun ProfileScreen(
+        userData: UserData?,
+        onSignOut: () -> Unit
+    ){
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -178,37 +226,17 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TextField(value = uname, onValueChange = {
-                uname=it
-            }, label = {
-                Text(text = "Enter username")
-            })
+            if(userData?.username!=null){
+                Text(text = "Welcome ${userData.username}!!", fontSize = 36.sp, fontWeight = FontWeight.SemiBold)
+            }
             Spacer(modifier = Modifier.height(10.dp))
-            TextField(value = password, onValueChange = {
-                password=it
-            }, label = {
-                Text(text = "Enter password")
-            })
-            Button(onClick = {
-                editor.putString("username", uname)
-                editor.putString("password", password)
-                editor.apply()
-            }) {
-                Text(text = "Save my creds")
-            }
-            Button(onClick = {
-                credsVisible=!credsVisible
-            }) {
-                Text(text = "Show my creds")
-            }
-            if(credsVisible){
-                Column {
-                    Text(text = "Username: $uname")
-                    Text(text = "Password: $password")
-                }
+            Button(onClick = onSignOut) {
+                Text(text = "Sign Out")
             }
         }
+
     }
+
 
 }
 
